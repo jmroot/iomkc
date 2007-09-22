@@ -17,13 +17,12 @@ import sys
 import thread
 import time
 from zipUtils import zipLoad
-from IOChain import IOChain
+from IOChain import IOChain, szkey
 
 sectorSize = 512
 sectorMask = ~511
-dev = None
+
 data = ""
-szkey = 0 #index into the chain's key for size
 
 def do_io(write, size):
 	if write:
@@ -32,7 +31,6 @@ def do_io(write, size):
 		newdata = os.read(dev, size)
 
 if __name__ == "__main__":
-	global dev, data
 	
 	if len(sys.argv) < 3:
 		print "Usage: runChain.py chainfile device"

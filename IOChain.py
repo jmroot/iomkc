@@ -9,6 +9,15 @@ Author: Joshua Root <jmr@gelato.unsw.edu.au>
 
 from random import random
 
+szkey = 0 #indices into stateKey for the attributes
+skkey = 1
+dlkey = 2
+
+strw = 0 #attributes' indices into the state tuple
+stsz = 1
+stsk = 2
+stdl = 3
+
 class IOChain:
 	"""
 	Markov chain of I/O ops.
@@ -21,21 +30,24 @@ class IOChain:
 	def step(self):
                 X = random()
                 probs = self.matrix[self.state]
+                #print probs
                 for (p,s) in probs:
                         if X < p:
                                 self.state = s
-                                return s
+                                return
 		print "oops, random variable matched no probabilities"
-		return None
 
 	def genOp(self, st):
 		rnd = random()
-		sz = int(rnd*(self.stateKey[0][st[1]] - self.stateKey[0][st[1]-1]) + self.stateKey[0][st[1]-1])
+		sz = int(rnd*(self.stateKey[szkey][st[stsz]] -
+			self.stateKey[szkey][st[stsz]-1]) + self.stateKey[szkey][st[stsz]-1])
 		rnd = random()
-		sk = int(rnd*(self.stateKey[1][st[2]] - self.stateKey[1][st[2]-1]) + self.stateKey[1][st[2]-1])
+		sk = int(rnd*(self.stateKey[skkey][st[stsk]] -
+			self.stateKey[skkey][st[stsk]-1]) + self.stateKey[skkey][st[stsk]-1])
 		rnd = random()
-		dl = rnd*(self.stateKey[2][st[3]] - self.stateKey[2][st[3]-1]) + self.stateKey[2][st[3]-1]
-		return (st[0],sz,sk,dl)
+		dl = rnd*(self.stateKey[dlkey][st[stdl]] -
+			self.stateKey[dlkey][st[stdl]-1]) + self.stateKey[dlkey][st[stdl]-1]
+		return (st[strw],sz,sk,dl)
 	
 	def _buildMatrix(self, transitionCounts):
 		matrix = {}

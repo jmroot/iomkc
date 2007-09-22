@@ -23,6 +23,7 @@ sectorSize = 512
 sectorMask = ~511
 dev = None
 data = ""
+szkey = 0 #index into the chain's key for size
 
 def do_io(write, size):
 	if write:
@@ -31,6 +32,7 @@ def do_io(write, size):
 		newdata = os.read(dev, size)
 
 if __name__ == "__main__":
+	global dev, data
 	
 	if len(sys.argv) < 3:
 		print "Usage: runChain.py chainfile device"
@@ -39,10 +41,11 @@ if __name__ == "__main__":
 	chain = zipLoad(sys.argv[1])
 	dev = os.open(sys.argv[2], os.O_RDWR|os.O_DIRECT)
 	devsize = os.lseek(dev,0,2)
+	print "device size: "+str(devsize)
 	offset = 0
 	os.lseek(dev, offset, 0)
 
-	data.zfill(chain.stateKey[0][-1]) #zero filled array to write from
+	data.zfill(chain.stateKey[szkey][-1]) #zero filled array to write from
 
 	lastTime = datetime.utcnow()
 	while True:

@@ -12,7 +12,7 @@ Author: Joshua Root <jmr@gelato.unsw.edu.au>
 import re
 import sys
 from zipUtils import zipSave
-from IOChain import IOChain
+from IOChain import IOChain, szkey, skkey, dlkey, strw, stsz, stsk, stdl
 
 # An op is (r/w,seek,size,delay)
 # size is bytes but seek is sectors, thanks to blkparse
@@ -22,13 +22,13 @@ from IOChain import IOChain
 sectorSize = 512
 
 def classify(op, key):
-	rw = op[0]
-	size = op[1]
-	seek = op[2]
-	delay = op[3]
-	sizeKey = key[0]
-	seekKey = key[1]
-	delayKey = key[2]
+	rw = op[strw]
+	size = op[stsz]
+	seek = op[stsk]
+	delay = op[stdl]
+	sizeKey = key[szkey]
+	seekKey = key[skkey]
+	delayKey = key[dlkey]
 	for i in range(len(sizeKey)):
 		if size < sizeKey[i]:
 			sz = i
@@ -96,24 +96,24 @@ if __name__ == "__main__":
 	seekGranule = (maxSeek - minSeek) / 6
 	delayGranule = maxDelay / 10
 
-	key[0].append(0) #simplifies building ops
+	key[szkey].append(0) #simplifies building ops
 	for i in range(1,10):
-		key[0].append(i*sizeGranule)
-	key[0].append(maxSize + 1) # so all ops will match a bucket
+		key[szkey].append(i*sizeGranule)
+	key[szkey].append(maxSize + 1) # so all ops will match a bucket
 
-	key[1].append(minSeek) #need to know it when generating ops later
-	key[1].append(minSeek + seekGranule)
-	key[1].append(minSeek + 2*seekGranule)
-	key[1].append(0)
-	key[1].append(1) #special case sequential access
-	key[1].append(maxSeek - 2*seekGranule)
-	key[1].append(maxSeek - seekGranule)
-	key[1].append(maxSeek + 1)
+	key[skkey].append(minSeek) #need to know it when generating ops later
+	key[skkey].append(minSeek + seekGranule)
+	key[skkey].append(minSeek + 2*seekGranule)
+	key[skkey].append(0)
+	key[skkey].append(1) #special case sequential access
+	key[skkey].append(maxSeek - 2*seekGranule)
+	key[skkey].append(maxSeek - seekGranule)
+	key[skkey].append(maxSeek + 1)
 
-	key[2].append(0.0)
+	key[dlkey].append(0.0)
 	for i in range(1,10):
-		key[2].append(i*delayGranule)
-	key[2].append (maxDelay + 1)
+		key[dlkey].append(i*delayGranule)
+	key[dlkey].append (maxDelay + 1)
 	
 	print "Second pass"
 	infile.seek(0)

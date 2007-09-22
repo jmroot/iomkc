@@ -37,9 +37,19 @@ if __name__ == "__main__":
 		sys.exit(2)
 	
 	chain = zipLoad(sys.argv[1])
-	dev = os.open(sys.argv[2], os.O_RDWR|os.O_DIRECT)
+	
+	flags = os.O_RDWR
+	if hasattr(os, "O_LARGEFILE"):
+		flags |= os.O_LARGEFILE
+		print "using O_LARGEFILE"
+	if hasattr(os, "O_DIRECT"):
+		flags |= os.O_DIRECT
+		print "using O_DIRECT"
+	dev = os.open(sys.argv[2], flags)
+	
 	devsize = os.lseek(dev,0,2)
 	print "device size: "+str(devsize)
+	
 	offset = 0
 	os.lseek(dev, offset, 0)
 

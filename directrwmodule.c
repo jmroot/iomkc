@@ -75,7 +75,7 @@ directrw_write(PyObject *self /* Not used */, PyObject *args)
 	}
 	
 	//do {
-        ssize_t n = write(fd, buf+done, sz-done);
+        ssize_t n = write(fd, abuf+done, sz-done);
         //printf("directrw_write: write ok\n");
         if (n == -1) {
                 if (abuf)

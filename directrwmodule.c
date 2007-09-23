@@ -63,14 +63,14 @@ directrw_write(PyObject *self /* Not used */, PyObject *args)
         //printf("directrw_write: args ok - fd=%d, buf=%p, sz=%ul\n", fd, buf, sz);
 	if (((unsigned long)buf & 511) != 0) {
 	     /* misaligned, so fix up */
-                printf("directrw_write: buf misaligned\n");
+                //printf("directrw_write: buf misaligned\n");
                 abuf = valloc(sz);
                 if (!abuf)
                         return PyErr_NoMemory();
                 memcpy(abuf, buf, sz);
 	} else {
                 /* was OK, so use the existing buffer */
-                printf("directrw_write: buf ok\n");
+                //printf("directrw_write: buf ok\n");
                 abuf = buf;
 	}
 	

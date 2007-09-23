@@ -12,6 +12,7 @@ Author: Joshua Root <jmr@gelato.unsw.edu.au>
 # todo: option to run for a fixed time or number of I/Os
 
 from datetime import datetime
+import directrw
 import os
 import sys
 import thread
@@ -26,9 +27,9 @@ data = ""
 
 def do_io(write, size):
 	if write:
-		os.write(dev, data[:size])
+		directrw.write(dev, data[:size], size)
 	else:
-		newdata = os.read(dev, size)
+		newdata = directrw.read(dev, size)
 
 if __name__ == "__main__":
 	

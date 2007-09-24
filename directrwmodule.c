@@ -15,32 +15,29 @@ directrw_read(PyObject *self /* Not used */, PyObject *args)
         int fd = 0;
         size_t sz = 0;
         char *buf;
-        ssize_t done = 0;
-        
+        ssize_t n;
+
 	if (!PyArg_ParseTuple(args, "il", &fd, &sz))
 		return NULL;
-        
+
         //printf("directrw_read: args ok - fd=%d, sz=%ul\n", fd, sz);
-      /* valloc aligns to page size; Linux read/write with O_DIRECT
-         only really needs 512-byte alignment, but meh */
+        /* valloc aligns to page size; Linux read/write with O_DIRECT
+           only really needs 512-byte alignment, but meh */
         buf = valloc(sz);
         if (!buf)
                 return PyErr_NoMemory();
-        
+
         //printf("directrw_read: memory allocated ok\n");
-        //do {
-        ssize_t n = read(fd, buf+done, sz-done);
-                //printf("directrw_read: read ok\n");
+        Py_BEGIN_ALLOW_THREADS
+        n = read(fd, buf, sz);
+        Py_END_ALLOW_THREADS
+
         if (n == -1) {
                 free(buf);
                 return PyErr_SetFromErrno(PyExc_OSError);
         }
-                //printf("directrw_read: read ok\n");
-                //done += n;
-        //} while (done < sz);
-        
-        //printf("directrw_read: all read ok\n");
-        
+        //printf("directrw_read: read ok\n");
+
         return Py_BuildValue("s", buf);
 }
 
@@ -55,14 +52,14 @@ directrw_write(PyObject *self /* Not used */, PyObject *args)
         size_t sz = 0;
         char *abuf = NULL; /* correctly aligned buffer */
         char *buf = NULL; /* original buffer */
-        ssize_t done = 0;
-      
+        ssize_t n;
+
 	if (!PyArg_ParseTuple(args, "isl", &fd, &buf, &sz))
 		return NULL;
-	
+
         //printf("directrw_write: args ok - fd=%d, buf=%p, sz=%ul\n", fd, buf, sz);
 	if (((unsigned long)buf & 511) != 0) {
-	     /* misaligned, so fix up */
+                /* misaligned, so fix up */
                 //printf("directrw_write: buf misaligned\n");
                 abuf = valloc(sz);
                 if (!abuf)
@@ -73,19 +70,18 @@ directrw_write(PyObject *self /* Not used */, PyObject *args)
                 //printf("directrw_write: buf ok\n");
                 abuf = buf;
 	}
-	
-	//do {
-        ssize_t n = write(fd, abuf+done, sz-done);
-        //printf("directrw_write: write ok\n");
+
+        Py_BEGIN_ALLOW_THREADS
+        n = write(fd, abuf, sz);
+        Py_END_ALLOW_THREADS
+
         if (n == -1) {
                 if (abuf)
                         free(abuf);
                 return PyErr_SetFromErrno(PyExc_OSError);
         }
-            //done += n;
-      //} while (done < sz);
-        //printf("directrw_write: all written ok\n");
-	
+        //printf("directrw_write: write ok\n");
+
 	if (abuf)
                 free(abuf);
         Py_INCREF(Py_None);

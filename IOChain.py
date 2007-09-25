@@ -40,13 +40,16 @@ class IOChain:
 	def genOp(self, st):
 		rnd = random()
 		sz = int(rnd*(self.stateKey[szkey][st[stsz]] -
-			self.stateKey[szkey][st[stsz]-1]) + self.stateKey[szkey][st[stsz]-1])
+			self.stateKey[szkey][st[stsz]-1]) +
+			self.stateKey[szkey][st[stsz]-1])
 		rnd = random()
 		sk = int(rnd*(self.stateKey[skkey][st[stsk]] -
-			self.stateKey[skkey][st[stsk]-1]) + self.stateKey[skkey][st[stsk]-1])
+			self.stateKey[skkey][st[stsk]-1]) +
+			self.stateKey[skkey][st[stsk]-1])
 		rnd = random()
 		dl = rnd*(self.stateKey[dlkey][st[stdl]] -
-			self.stateKey[dlkey][st[stdl]-1]) + self.stateKey[dlkey][st[stdl]-1]
+			self.stateKey[dlkey][st[stdl]-1]) +
+			self.stateKey[dlkey][st[stdl]-1]
 		return (st[strw],sz,sk,dl)
 	
 	def _buildMatrix(self, transitionCounts):

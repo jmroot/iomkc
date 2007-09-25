@@ -3,7 +3,7 @@
 """
 Generate Markov chain based on blkparse output
 
-Usage: buildChain.py infile outfile
+Usage: buildChain.py -i infile -o outfile [options]
 
 Copyright 2007 The University of New South Wales
 Author: Joshua Root <jmr@gelato.unsw.edu.au>
@@ -11,6 +11,7 @@ Author: Joshua Root <jmr@gelato.unsw.edu.au>
 
 import re
 import sys
+from getopt import gnu_getopt
 from zipUtils import zipSave
 from IOChain import IOChain, szkey, skkey, dlkey, strw, stsz, stsk, stdl
 
@@ -18,8 +19,35 @@ from IOChain import IOChain, szkey, skkey, dlkey, strw, stsz, stsk, stdl
 # size is bytes but seek is sectors, thanks to blkparse
 # A state is a tuple of bucket numbers
 # A state's step fn is [p1->s1,(p1+p2)->s2,(p1+p2+p3)->s3,...]
-# I guess we assume 512-byte sectors
+# I guess we assume 512-byte sectors. Maybe it should be an option.
 sectorSize = 512
+nsz = 10 #number of size buckets
+nsk = 7 #seek
+ndl = 10 #delay
+infilename = None
+outfilename = None
+
+def parseArgs():
+      global nsz, nsk, ndl, infilename, outfilename
+      optlist, args = gnu_getopt(sys.argv[1:], "d:i:k:o:s:")
+      for opt,val in optlist:
+            if opt == "-i":
+                  infilename = val
+            elif opt == "-o":
+                  outfilename = val
+            elif opt == "-s":
+                  nsz = int(val)
+            elif opt == "-k":
+                  nsk = int(val)
+            elif opt == "-d":
+                  ndl = int(val)
+            else:
+                  print "Unknown option: "+opt
+                  sys.exit(2)
+      
+      if infilename is None or outfilename is None:
+            print "Usage: buildChain.py -i infile -o outfile [options]"
+            sys.exit(2)
 
 def classify(op, key):
 	rw = op[strw]
@@ -47,32 +75,36 @@ def classify(op, key):
 
 if __name__ == "__main__":
 	
-	if len(sys.argv) < 3:
-		print "Usage: buildChain.py infile outfile"
-		sys.exit(2)
-	
 	transitionCounts = {} # state -> (state -> int)
 	key = [[], [], []] # list of bucket boundaries
 	
+	# defaults (can be overridden with command line options):
 	# buckets: r/w=2, seek=7 (farback,medback,nearback,0,nearfwd,medfwd,farfwd),
 	# size=10, delay=10 -- change these if necessary
-	# state space size = 1400, graph edges = 1.96M
+	# state space size = 1400, (possible) graph edges = 1.96M
 	
 	totalOps = 0
 	lastTime = 0.0
 	lastSector = 0
 	maxSeek = -sys.maxint-1
 	minSeek = sys.maxint
+	seekSum = 0
 	maxSize = 0
+	sizeSum = 0
 	maxDelay = 0.0
+	delaySum = 0.0
 	regex = re.compile(r"Q (..?) (\d+) (\d+) (\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?")
 	
+	parseArgs()
+	
 	print "First pass"
-	infile = open(sys.argv[1])
+	infile = open(infilename)
 	for line in infile:
 		match = regex.match(line)
 		if match is not None:
 			groups = match.groups()
+			
+			totalOps += 1
 			
 			size = int(groups[1])
 			if maxSize < size:
@@ -92,15 +124,16 @@ if __name__ == "__main__":
 	
 	print "Creating buckets"
 	# key defines the buckets into which to divide ops
-	sizeGranule = maxSize / 10
-	seekGranule = (maxSeek - minSeek) / 6
-	delayGranule = maxDelay / 10
+	sizeGranule = maxSize / nsz
+	seekGranule = (maxSeek - minSeek) / (nsk-1) #special-case 0 (sequential)
+	delayGranule = maxDelay / ndl
 
 	key[szkey].append(0) #simplifies building ops
-	for i in range(1,10):
+	for i in range(1,nsz):
 		key[szkey].append(i*sizeGranule)
 	key[szkey].append(maxSize + 1) # so all ops will match a bucket
 
+      # need to fix this to work properly with variable nsk
 	key[skkey].append(minSeek) #need to know it when generating ops later
 	key[skkey].append(minSeek + seekGranule)
 	key[skkey].append(minSeek + 2*seekGranule)
@@ -111,7 +144,7 @@ if __name__ == "__main__":
 	key[skkey].append(maxSeek + 1)
 
 	key[dlkey].append(0.0)
-	for i in range(1,10):
+	for i in range(1,ndl):
 		key[dlkey].append(i*delayGranule)
 	key[dlkey].append (maxDelay + 1)
 	
@@ -162,4 +195,4 @@ if __name__ == "__main__":
 	print "Building chain"
 	chain = IOChain(initialState, key, transitionCounts)
 	print "Saving"
-	zipSave(sys.argv[2], chain)
+	zipSave(outfilename, chain)

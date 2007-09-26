@@ -79,8 +79,9 @@ if __name__ == "__main__":
 	key = [[], [], []] # list of bucket boundaries
 	
 	# defaults (can be overridden with command line options):
-	# buckets: r/w=2, seek=7 (farback,medback,nearback,0,nearfwd,medfwd,farfwd),
-	# size=10, delay=10 -- change these if necessary
+	# buckets: r/w=2, seek=7 (farback,medback,nearback,0,nearfwd,
+        #                         medfwd,farfwd),
+	# size=10, delay=10
 	# state space size = 1400, (possible) graph edges = 1.96M
 	
 	totalOps = 0
@@ -93,7 +94,7 @@ if __name__ == "__main__":
 	sizeSum = 0
 	maxDelay = 0.0
 	delaySum = 0.0
-	regex = re.compile(r"Q (..?) (\d+) (\d+) (\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?")
+	regex = re.compile(r"Q (..?) (\d+) (\d+) (\d+(\.\d*)?|\.\d+)")
 	
 	parseArgs()
 	
@@ -105,7 +106,7 @@ if __name__ == "__main__":
 			groups = match.groups()
 			
 			totalOps += 1
-			
+                        
 			size = int(groups[1])
 			if maxSize < size:
 				maxSize = size
@@ -133,7 +134,7 @@ if __name__ == "__main__":
 		key[szkey].append(i*sizeGranule)
 	key[szkey].append(maxSize + 1) # so all ops will match a bucket
 
-      # need to fix this to work properly with variable nsk
+      # XXX need to fix this to work properly with variable nsk
 	key[skkey].append(minSeek) #need to know it when generating ops later
 	key[skkey].append(minSeek + seekGranule)
 	key[skkey].append(minSeek + 2*seekGranule)
@@ -146,7 +147,7 @@ if __name__ == "__main__":
 	key[dlkey].append(0.0)
 	for i in range(1,ndl):
 		key[dlkey].append(i*delayGranule)
-	key[dlkey].append (maxDelay + 1)
+	key[dlkey].append(maxDelay + 1)
 	
 	print "Second pass"
 	infile.seek(0)

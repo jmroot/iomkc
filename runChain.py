@@ -9,6 +9,8 @@ Copyright 2007 The University of New South Wales
 Author: Joshua Root <jmr@gelato.unsw.edu.au>
 """
 
+# todo: option to use posix async I/O (needs C module)
+
 from datetime import datetime
 import directrw
 import os
@@ -52,6 +54,7 @@ def do_io(write, size):
 	if write:
 		directrw.write(dev, data[:size], size)
 	else:
+		#print "read: dev="+str(dev)+", size="+str(size)
 		newdata = directrw.read(dev, size)
 
 if __name__ == "__main__":

@@ -139,7 +139,8 @@ if __name__ == "__main__":
       for i in range(1,ndl):
             key[dlkey].append(i*delayGranule)
       key[dlkey].append(maxDelay + 1)
-
+      
+      print "nsz,nsk,ndl = "+str(nsz)+","+str(nsk)+","+str(ndl)
       #print str(key)
 
       print "Second pass"

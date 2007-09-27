@@ -1,0 +1,35 @@
+To build a Markov chain: you'll need some blktrace output, which comes in
+the form of one file per CPU, normally named {device}.blktrace.{cpu}. First
+do: "./prep.sh {device} OPFILE". Then run "./buildChain.py OPFILE CHAINFILE"
+and a Markov chain built from the trace will be output to CHAINFILE.
+
+To run an I/O workload based on your Markov chain:
+first build the C module with "python setup.py build". Then move it
+where python will find it with "mv build/lib.*/*.so ." (assuming you're in
+the directory containing runChain.py).
+
+Now run: "./runChain.py CHAINFILE TARGET". TARGET will be opened with O_DIRECT
+if available, so you really want it to be a device, e.g. /dev/sdb. The script
+will keep reading/writing to/from TARGET until you stop it, e.g. with ctrl-c.
+Or, you can specify a maximum number of ops to perform and/or a maximum time
+for which to run, using the -n and -t options respectively.
+
+Why the C extension exists:
+
+Reads initially always threw exceptions. Apparently this was because Python
+doesn't bother allocating blocksize-aligned buffers when reading from a file
+that has been opened with O_DIRECT. I wrote a C extension module that
+does it right.
+
+Random notes I wrote while developing this stuff:
+
+Need data from traces to determine appropriate buckets into which to
+divide transfer sizes, inter-op delays, and seek distance.
+
+Count up number of transitions between each triplet. Store probability
+matrix.
+
+Replay by generating I/Os matching current triplet, moving to next based
+on matrix + random().
+
+Store as lists of cumulative probabilities, e.g. [0.1, 0.3, 0.8, 1.0]

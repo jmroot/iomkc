@@ -57,6 +57,8 @@ def classify(op, key):
 	sizeKey = key[szkey]
 	seekKey = key[skkey]
 	delayKey = key[dlkey]
+	
+	#print "size,seek,delay = "+str((size,seek,delay))
 	for i in range(len(sizeKey)):
 		if size < sizeKey[i]:
 			sz = i
@@ -134,20 +136,22 @@ if __name__ == "__main__":
 		key[szkey].append(i*sizeGranule)
 	key[szkey].append(maxSize + 1) # so all ops will match a bucket
 
-      # XXX need to fix this to work properly with variable nsk
-	key[skkey].append(minSeek) #need to know it when generating ops later
-	key[skkey].append(minSeek + seekGranule)
-	key[skkey].append(minSeek + 2*seekGranule)
-	key[skkey].append(0)
-	key[skkey].append(1) #special case sequential access
-	key[skkey].append(maxSeek - 2*seekGranule)
-	key[skkey].append(maxSeek - seekGranule)
+     	for i in range(nsk-1):
+		val = minSeek + i*seekGranule
+		if (val >= 0 and val-seekGranule < 0):
+			# special-case sequential access
+			# might be duplicates sometimes, but hey
+			key[skkey].append(0)
+			key[skkey].append(1)
+		key[skkey].append(val)
 	key[skkey].append(maxSeek + 1)
 
 	key[dlkey].append(0.0)
 	for i in range(1,ndl):
 		key[dlkey].append(i*delayGranule)
 	key[dlkey].append(maxDelay + 1)
+
+	#print str(key)
 	
 	print "Second pass"
 	infile.seek(0)

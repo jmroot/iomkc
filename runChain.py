@@ -12,6 +12,7 @@ Author: Joshua Root <jmr@gelato.unsw.edu.au>
 # todo: option to use posix async I/O (needs C module)
 
 from datetime import datetime
+from getopt import gnu_getopt
 import directrw
 import os
 import sys
@@ -79,9 +80,9 @@ if __name__ == "__main__":
 
 	data.zfill(chain.stateKey[szkey][-1]) #zero filled array to write from
 
-      opsDone = 0
-      startTime = datetime.utcnow()
-      lastTime = startTime
+      	opsDone = 0
+      	startTime = datetime.utcnow()
+      	lastTime = startTime
 	while True:
             if maxOps is not None and opsDone >= maxOps:
                   break

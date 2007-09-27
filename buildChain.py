@@ -24,7 +24,7 @@ sectorSize = 512
 
 sizeGranule = 4096
 seekGranule = 131072
-delayGranule = 0.01
+delayGranule = 0.001
 
 infilename = None
 outfilename = None
@@ -117,28 +117,28 @@ if __name__ == "__main__":
       # key defines the buckets into which to divide ops
       nsz = maxSize / sizeGranule
       key[szkey].append(0) #simplifies building ops
-      for i in range(1,nsz):
+      for i in range(nsz+1):
             key[szkey].append(i*sizeGranule)
-      key[szkey].append(maxSize + 1) # so all ops will match a bucket
+      key[szkey].append(maxSize+1)
 
       nsk = (maxSeek - minSeek) / seekGranule
-      for i in range(nsk-1):
+      for i in range(nsk+1):
             val = minSeek + i*seekGranule
             if (val >= 0 and val-seekGranule < 0):
                   # special-case sequential access
                   # might be duplicates sometimes, but hey
-                  skzero = i+1
+                  skzero = i
                   key[skkey].append(0)
                   key[skkey].append(1)
                   #print "skzero is "+str(skzero)+", points to "+str(key[skkey][skzero])
             key[skkey].append(val)
-      key[skkey].append(maxSeek + 1)
+      key[skkey].append(maxSeek+1)
 
       ndl = int(maxDelay / delayGranule)
       key[dlkey].append(0.0)
-      for i in range(1,ndl):
+      for i in range(ndl+1):
             key[dlkey].append(i*delayGranule)
-      key[dlkey].append(maxDelay + 1)
+      key[dlkey].append(maxDelay) #twice on the end, to limit it
       
       print "nsz,nsk,ndl = "+str(nsz)+","+str(nsk)+","+str(ndl)
       #print str(key)

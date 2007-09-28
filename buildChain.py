@@ -9,7 +9,13 @@ Copyright 2007 The University of New South Wales
 Author: Joshua Root <jmr@gelato.unsw.edu.au>
 """
 
-import re
+# speed things up with psyco if available (it isn't on 64-bit platforms...)
+try:
+      import psyco
+      psyco.full()
+except ImportError:
+      pass
+
 import sys
 from getopt import gnu_getopt
 from zipUtils import zipSave
@@ -51,6 +57,15 @@ def parseArgs():
             print "Usage: buildChain.py -i infile -o outfile [options]"
             sys.exit(2)
 
+def parseLine(line):
+      words = line.split()
+      rw = words[1][0] == 'W'
+      size = int(words[2])
+      sector = int(words[3])
+      secs = float(words[4])
+      
+      return (rw,size,sector,secs)
+
 def classify(op, key):
       #print "size,seek,delay = "+str((size,seek,delay))
       sz = op[stsz] / sizeGranule
@@ -86,32 +101,28 @@ if __name__ == "__main__":
       sizeSum = 0
       maxDelay = 0.0
       delaySum = 0.0
-      regex = re.compile(r"Q (..?) (\d+) (\d+) (\d+(\.\d*)?|\.\d+)")
 
       parseArgs()
 
       print "First pass"
       infile = open(infilename)
       for line in infile:
-            match = regex.match(line)
-            if match is not None:
-                  groups = match.groups()
-      
-                  size = int(groups[1])
-                  if maxSize < size:
-                        maxSize = size
+            rw,size,sector,thisTime = parseLine(line)
+            
+            if maxSize < size:
+                  maxSize = size
 
-                  seek = int(groups[2]) - lastSector
-                  if maxSeek < seek:
-                        maxSeek = seek
-                  if minSeek > seek:
-                        minSeek = seek
-                  lastSector = int(groups[2]) + (size/sectorSize)
+            seek = sector - lastSector
+            if maxSeek < seek:
+                  maxSeek = seek
+            if minSeek > seek:
+                  minSeek = seek
+            lastSector = sector + (size/sectorSize)
 
-                  delay = float(groups[3]) - lastTime
-                  if maxDelay < delay:
-                        maxDelay = delay
-                  lastTime = float(groups[3])
+            delay = thisTime - lastTime
+            if maxDelay < delay:
+                  maxDelay = delay
+            lastTime = thisTime
 
       print "Creating buckets"
       # key defines the buckets into which to divide ops
@@ -143,45 +154,33 @@ if __name__ == "__main__":
 
       print "Second pass"
       infile.seek(0)
-      # special-case first op since it doesn't come from
-      # any other one -- sigh
+      # special-case first op since it doesn't come from any other one -- sigh
       line = infile.readline()
-      match = regex.match(line)
-      if match is not None:
-            groups = match.groups()
-            rw = groups[0][0] == 'W'
-            size = int(groups[1])
-            lastSector = int(groups[2]) + (size/sectorSize)
-            lastTime = float(groups[3])
-      else:
-            raise ValueError("First input line couldn't be parsed")
+      rw,size,sector,thisTime = parseLine(line)
+      lastSector = sector + (size/sectorSize)
+      lastTime = thisTime
       op = (rw, size, 0, 0.0) #arbitrarily call it sequential
       initialState = classify(op, key)
       lastState = initialState
 
       for line in infile:
-            match = regex.match(line)
-            if match is not None:
-                  groups = match.groups()
-                  rw = groups[0][0] == 'W'
-                  size = int(groups[1])
-                  seek = int(groups[2]) - lastSector
-                  lastSector = int(groups[2]) + (size/sectorSize)
-                  delay = float(groups[3]) - lastTime
-                  lastTime = float(groups[3])
+            rw,size,sector,thisTime = parseLine(line)
+            seek = sector - lastSector
+            lastSector = sector + (size/sectorSize)
+            delay = thisTime - lastTime
+            lastTime = thisTime
 
-                  op = (rw, size, seek, delay)
-                  state = classify(op, key)
-                  # increment lastState->state transition count
-                  if lastState in transitionCounts:
-                        if state in transitionCounts[lastState]:
-                              transitionCounts[lastState][state] += 1
-                        else:
-                              transitionCounts[lastState][state] = 1
+            state = classify((rw, size, seek, delay), key)
+            # increment lastState->state transition count
+            if lastState in transitionCounts:
+                  if state in transitionCounts[lastState]:
+                        transitionCounts[lastState][state] += 1
                   else:
-                        transitionCounts[lastState] = {}
                         transitionCounts[lastState][state] = 1
-                  lastState = state
+            else:
+                  transitionCounts[lastState] = {}
+                  transitionCounts[lastState][state] = 1
+            lastState = state
 
       infile.close()
 

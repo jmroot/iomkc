@@ -59,38 +59,38 @@ def parseArgs():
             sys.exit(2)
 
 def do_io(write, size):
-	if write:
-		directrw.write(dev, data[:size], size)
-	else:
-		#print "read: dev="+str(dev)+", size="+str(size)
-		newdata = directrw.read(dev, size)
+      if write:
+            directrw.write(dev, data[:size], size)
+      else:
+            #print "read: dev="+str(dev)+", size="+str(size)
+            newdata = directrw.read(dev, size)
 
 if __name__ == "__main__":
-	
-	parseArgs()
-	chain = zipLoad(infilename)
-	
-	flags = os.O_RDWR
-	if hasattr(os, "O_LARGEFILE"):
-		flags |= os.O_LARGEFILE
-		print "using O_LARGEFILE"
-	if hasattr(os, "O_DIRECT"):
-		flags |= os.O_DIRECT
-		print "using O_DIRECT"
-	dev = os.open(devicename, flags)
-	
-	devsize = os.lseek(dev,0,2)
-	print "device size: "+str(devsize)
-	
-	offset = 0
-	os.lseek(dev, offset, 0)
 
-	data.zfill(chain.stateKey[szkey][-1]) #zero filled array to write from
+      parseArgs()
+      chain = zipLoad(infilename)
 
-      	opsDone = 0
-      	startTime = datetime.utcnow()
-      	lastTime = startTime
-	while True:
+      flags = os.O_RDWR
+      if hasattr(os, "O_LARGEFILE"):
+            flags |= os.O_LARGEFILE
+            print "using O_LARGEFILE"
+      if hasattr(os, "O_DIRECT"):
+            flags |= os.O_DIRECT
+            print "using O_DIRECT"
+      dev = os.open(devicename, flags)
+
+      devsize = os.lseek(dev,0,2)
+      print "device size: "+str(devsize)
+
+      offset = 0
+      os.lseek(dev, offset, 0)
+
+      data.zfill(chain.stateKey[szkey][-1]) #zero filled array to write from
+
+      opsDone = 0
+      startTime = datetime.utcnow()
+      lastTime = startTime
+      while True:
             if maxOps is not None and opsDone >= maxOps:
                   break
             if maxTime is not None:

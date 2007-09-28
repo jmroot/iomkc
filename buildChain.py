@@ -35,9 +35,11 @@ delayGranule = 0.001
 infilename = None
 outfilename = None
 
+bigmem = False #setting True keeps trace data in memory rather than two-pass streaming
+
 def parseArgs():
       global sizeGranule, seekGranule, delayGranule, infilename, outfilename
-      optlist, args = gnu_getopt(sys.argv[1:], "d:i:k:o:s:")
+      optlist, args = gnu_getopt(sys.argv[1:], "d:i:k:mo:s:")
       for opt,val in optlist:
             if opt == "-i":
                   infilename = val
@@ -49,6 +51,8 @@ def parseArgs():
                   seekGranule = int(val)
             elif opt == "-d":
                   delayGranule = float(val)
+            elif opt == "-m":
+                  bigmem = True
             else:
                   print "Unknown option: "+opt
                   sys.exit(2)
@@ -103,6 +107,9 @@ if __name__ == "__main__":
       delaySum = 0.0
 
       parseArgs()
+      
+      if bigmem:
+            ops = []
 
       print "First pass"
       infile = open(infilename)
@@ -123,6 +130,12 @@ if __name__ == "__main__":
             if maxDelay < delay:
                   maxDelay = delay
             lastTime = thisTime
+            
+            if bigmem:
+                  ops.append((rw,size,seek,delay))
+      
+      if bigmem:
+            infile.close()
 
       print "Creating buckets"
       # key defines the buckets into which to divide ops
@@ -153,36 +166,52 @@ if __name__ == "__main__":
       #print str(key)
 
       print "Second pass"
-      infile.seek(0)
-      # special-case first op since it doesn't come from any other one -- sigh
-      line = infile.readline()
-      rw,size,sector,thisTime = parseLine(line)
-      lastSector = sector + (size/sectorSize)
-      lastTime = thisTime
-      op = (rw, size, 0, 0.0) #arbitrarily call it sequential
-      initialState = classify(op, key)
-      lastState = initialState
-
-      for line in infile:
-            rw,size,sector,thisTime = parseLine(line)
-            seek = sector - lastSector
-            lastSector = sector + (size/sectorSize)
-            delay = thisTime - lastTime
-            lastTime = thisTime
-
-            state = classify((rw, size, seek, delay), key)
-            # increment lastState->state transition count
-            if lastState in transitionCounts:
-                  if state in transitionCounts[lastState]:
-                        transitionCounts[lastState][state] += 1
+      
+      if bigmem:
+            initialState = classify(ops[0], key)
+            lastState = initialState
+            for op in ops[1:]:
+                  state = classify(op, key)
+                  if lastState in transitionCounts:
+                        if state in transitionCounts[lastState]:
+                              transitionCounts[lastState][state] += 1
+                        else:
+                              transitionCounts[lastState][state] = 1
                   else:
+                        transitionCounts[lastState] = {}
                         transitionCounts[lastState][state] = 1
-            else:
-                  transitionCounts[lastState] = {}
-                  transitionCounts[lastState][state] = 1
-            lastState = state
+                  lastState = state
+      else:
+            infile.seek(0)
+            # special-case first op since it doesn't come from any other one -- sigh
+            line = infile.readline()
+            rw,size,sector,thisTime = parseLine(line)
+            lastSector = sector + (size/sectorSize)
+            lastTime = thisTime
+            op = (rw, size, 0, 0.0) #arbitrarily call it sequential
+            initialState = classify(op, key)
+            lastState = initialState
+      
+            for line in infile:
+                  rw,size,sector,thisTime = parseLine(line)
+                  seek = sector - lastSector
+                  lastSector = sector + (size/sectorSize)
+                  delay = thisTime - lastTime
+                  lastTime = thisTime
 
-      infile.close()
+                  state = classify((rw, size, seek, delay), key)
+                  # increment lastState->state transition count
+                  if lastState in transitionCounts:
+                        if state in transitionCounts[lastState]:
+                              transitionCounts[lastState][state] += 1
+                        else:
+                              transitionCounts[lastState][state] = 1
+                  else:
+                        transitionCounts[lastState] = {}
+                        transitionCounts[lastState][state] = 1
+                  lastState = state
+
+            infile.close()
 
       print "Building chain"
       chain = IOChain(initialState, key, transitionCounts)

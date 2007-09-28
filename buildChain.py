@@ -116,7 +116,6 @@ if __name__ == "__main__":
       print "Creating buckets"
       # key defines the buckets into which to divide ops
       nsz = maxSize / sizeGranule
-      key[szkey].append(0) #simplifies building ops
       for i in range(nsz+1):
             key[szkey].append(i*sizeGranule)
       key[szkey].append(maxSize+1)
@@ -135,7 +134,6 @@ if __name__ == "__main__":
       key[skkey].append(maxSeek+1)
 
       ndl = int(maxDelay / delayGranule)
-      key[dlkey].append(0.0)
       for i in range(ndl+1):
             key[dlkey].append(i*delayGranule)
       key[dlkey].append(maxDelay) #twice on the end, to limit it

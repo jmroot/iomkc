@@ -23,7 +23,7 @@ from getopt import gnu_getopt
 import directrw
 import os
 import sys
-import thread
+import threading
 import time
 from zipUtils import zipLoad
 from IOChain import IOChain, szkey
@@ -90,6 +90,7 @@ if __name__ == "__main__":
       opsDone = 0
       startTime = datetime.utcnow()
       lastTime = startTime
+      startnthreads = threading.activeCount()
       while True:
             if maxOps is not None and opsDone >= maxOps:
                   break
@@ -118,8 +119,12 @@ if __name__ == "__main__":
 		
             offset = os.lseek(dev, offset, 0)
             print str(write)+","+str(size)+","+str(offset)+"("+str(seek)+")"+","+str(delay)
-            thread.start_new_thread(do_io, (write,size))
+            newthread = threading.Thread(target=do_io, args=(write,size))
+            newthread.start()
             lastTime = datetime.utcnow()
             offset += size
             chain.step()
             opsDone += 1
+      
+      while threading.activeCount() > startnthreads:
+            time.sleep(0.000001)

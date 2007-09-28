@@ -64,14 +64,15 @@ directrw_write(PyObject *self /* Not used */, PyObject *args)
                 abuf = valloc(sz);
                 if (!abuf)
                         return PyErr_NoMemory();
+                Py_BEGIN_ALLOW_THREADS
                 memcpy(abuf, buf, sz);
 	} else {
                 /* was OK, so use the existing buffer */
                 //printf("directrw_write: buf ok\n");
+                Py_BEGIN_ALLOW_THREADS
                 abuf = buf;
 	}
 
-        Py_BEGIN_ALLOW_THREADS
         n = write(fd, abuf, sz);
         Py_END_ALLOW_THREADS
 

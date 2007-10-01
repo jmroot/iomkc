@@ -9,7 +9,7 @@ Copyright 2007 The University of New South Wales
 Author: Joshua Root <jmr@gelato.unsw.edu.au>
 """
 
-# speed things up with psyco if available (it isn't on 64-bit platforms...)
+# use psyco JIT if available (only on IA-32...)
 try:
       import psyco
       psyco.full()
@@ -38,7 +38,8 @@ outfilename = None
 bigmem = False #setting True keeps trace data in memory rather than two-pass streaming
 
 def parseArgs():
-      global sizeGranule, seekGranule, delayGranule, infilename, outfilename
+      """Handle command-line options."""
+      global sizeGranule, seekGranule, delayGranule, infilename, outfilename, bigmem
       optlist, args = gnu_getopt(sys.argv[1:], "d:i:k:mo:s:")
       for opt,val in optlist:
             if opt == "-i":
@@ -71,6 +72,7 @@ def parseLine(line):
       return (rw,size,sector,secs)
 
 def classify(op, key):
+      """Determine which bucket number each quantity belongs in."""
       #print "size,seek,delay = "+str((size,seek,delay))
       sz = op[stsz] / sizeGranule
       seek = op[stsk]
@@ -83,62 +85,16 @@ def classify(op, key):
       dl = int(op[stdl] / delayGranule)
 
       return (op[strw], sz, sk, dl)
-
-
-if __name__ == "__main__":
-
-      transitionCounts = {} # state -> (state -> int)
-      key = [[], [], []] # list of bucket boundaries
-
-      # defaults (can be overridden with command line options):
-      # buckets: r/w=2, seek=7 (farback,medback,nearback,0,nearfwd,
-      #                         medfwd,farfwd),
-      # size=10, delay=10
-      # state space size = 1400, (possible) graph edges = 1.96M
-
-      lastTime = 0.0
-      lastSector = 0
-      maxSeek = -sys.maxint-1
-      minSeek = sys.maxint
-      seekSum = 0
-      maxSize = 0
-      sizeSum = 0
-      maxDelay = 0.0
-      delaySum = 0.0
-
-      parseArgs()
       
-      if bigmem:
-            ops = []
-
-      print "First pass"
-      infile = open(infilename)
-      for line in infile:
-            rw,size,sector,thisTime = parseLine(line)
-            
-            if maxSize < size:
-                  maxSize = size
-
-            seek = sector - lastSector
-            if maxSeek < seek:
-                  maxSeek = seek
-            if minSeek > seek:
-                  minSeek = seek
-            lastSector = sector + (size/sectorSize)
-
-            delay = thisTime - lastTime
-            if maxDelay < delay:
-                  maxDelay = delay
-            lastTime = thisTime
-            
-            if bigmem:
-                  ops.append((rw,size,seek,delay))
-      
-      if bigmem:
-            infile.close()
-
-      print "Creating buckets"
+def makeBuckets(maxSize, maxSeek, minSeek, maxDelay):
+      """
+      Define the ranges of the buckets for each quantity, based on the desired
+      granularity and the quantities' ranges in the input.
+      """
+      global skzero
+      key = [[], [], []]
       # key defines the buckets into which to divide ops
+      
       nsz = maxSize / sizeGranule
       for i in range(nsz+1):
             key[szkey].append(i*sizeGranule)
@@ -164,8 +120,45 @@ if __name__ == "__main__":
       
       print "nsz,nsk,ndl = "+str(nsz)+","+str(nsk)+","+str(ndl)
       #print str(key)
+      return key
 
-      print "Second pass"
+def findMinMax(infile):
+      """Determine the range that each quantity traverses in the input."""
+      global ops
+      maxSeek = -sys.maxint-1
+      minSeek = sys.maxint
+      maxSize = 0
+      maxDelay = 0.0
+      lastTime = 0.0
+      lastSector = 0
+      
+      infile.seek(0)
+      for line in infile:
+            rw,size,sector,thisTime = parseLine(line)
+            
+            if maxSize < size:
+                  maxSize = size
+
+            seek = sector - lastSector
+            if maxSeek < seek:
+                  maxSeek = seek
+            if minSeek > seek:
+                  minSeek = seek
+            lastSector = sector + (size/sectorSize)
+
+            delay = thisTime - lastTime
+            if maxDelay < delay:
+                  maxDelay = delay
+            lastTime = thisTime
+            
+            if bigmem:
+                  ops.append((rw,size,seek,delay))
+      
+      return (maxSize, maxSeek, minSeek, maxDelay)
+
+def countTransitions(infile, key):
+      """Count the transitions between pairs of states in the input."""
+      transitionCounts = {} # state -> (state -> int)
       
       if bigmem:
             initialState = classify(ops[0], key)
@@ -184,7 +177,7 @@ if __name__ == "__main__":
       else:
             infile.seek(0)
             # special-case first op since it doesn't come from any other one -- sigh
-            line = infile.readline()
+            line = infile.next()
             rw,size,sector,thisTime = parseLine(line)
             lastSector = sector + (size/sectorSize)
             lastTime = thisTime
@@ -210,7 +203,35 @@ if __name__ == "__main__":
                         transitionCounts[lastState] = {}
                         transitionCounts[lastState][state] = 1
                   lastState = state
+      return transitionCounts, initialState
 
+if __name__ == "__main__":
+
+      # defaults (can be overridden with command line options):
+      # buckets: r/w=2, seek=7 (farback,medback,nearback,0,nearfwd,
+      #                         medfwd,farfwd),
+      # size=10, delay=10
+      # state space size = 1400, (possible) graph edges = 1.96M
+
+      parseArgs()
+      
+      if bigmem:
+            ops = []
+
+      infile = open(infilename)
+      print "First pass"
+      (maxSize, maxSeek, minSeek, maxDelay) = findMinMax(infile)
+      if bigmem:
+            infile.close()
+      
+      print "Defining buckets"
+      key = makeBuckets(maxSize, maxSeek, minSeek, maxDelay)
+      
+      print "Second pass"
+      (transitionCounts, initialState) = countTransitions(infile, key)
+      if bigmem:
+            ops = None #free up the memory used by the op list
+      else:
             infile.close()
 
       print "Building chain"

@@ -58,7 +58,7 @@ directrw_write(PyObject *self /* Not used */, PyObject *args)
 		return NULL;
 
         //printf("directrw_write: args ok - fd=%d, buf=%p, sz=%ul\n", fd, buf, sz);
-	if (((unsigned long)buf & 511) != 0) {
+	if (((Py_uintptr_t)buf & 511) != 0) {
                 /* misaligned, so fix up */
                 //printf("directrw_write: buf misaligned\n");
                 abuf = valloc(sz);

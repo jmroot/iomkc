@@ -11,7 +11,7 @@ Author: Joshua Root <jmr@gelato.unsw.edu.au>
 
 # todo: option to use posix async I/O (needs C module)
 
-# speed things up with psyco if available (it isn't on 64-bit platforms...)
+# use psyco JIT if available (only on IA-32...)
 try:
       import psyco
       psyco.full()

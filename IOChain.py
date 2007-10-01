@@ -28,14 +28,16 @@ class IOChain:
 		self.matrix = self._buildMatrix(transitionCounts)
 
 	def step(self):
-                X = random()
-                probs = self.matrix[self.state]
-                #print probs
-                for (p,s) in probs:
-                        if X < p:
-                                self.state = s
-                                return
-		print "oops, random variable matched no probabilities"
+            X = random()
+            probs = self.matrix[self.state]
+            #print probs
+            for (p,s) in probs:
+                  if X < p:
+                        self.state = s
+                        return
+            # XXX the last state in the source trace could quite
+            # possibly not be a key in matrix
+            print "oops, random variable matched no probabilities"
 
 	def genOp(self, st):
 		rnd = random()

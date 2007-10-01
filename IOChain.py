@@ -56,13 +56,14 @@ class IOChain:
 	
 	def _buildMatrix(self, transitionCounts):
 		matrix = {}
+		sortkey = lambda p:p[0]
 		for s1 in transitionCounts.keys():
 			s1counts = transitionCounts[s1]
 			total = float(sum(s1counts.values()))
 			probs = []
 			for s2 in s1counts.keys():
 				probs.append([s1counts[s2]/total, s2])
-			probs.sort(key=lambda p:p[0], reverse=True)
+			probs.sort(key=sortkey, reverse=True)
 			for i in range(1,len(probs)):
 				probs[i][0] += probs[i-1][0]
 			probs[-1][0] = 1.0 # just to make sure :-)

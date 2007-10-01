@@ -71,7 +71,7 @@ def parseLine(line):
       
       return (rw,size,sector,secs)
 
-def classify(op, key):
+def classify(op):
       """Determine which bucket number each quantity belongs in."""
       #print "size,seek,delay = "+str((size,seek,delay))
       sz = op[stsz] / sizeGranule
@@ -134,7 +134,10 @@ def findMinMax(infile):
       
       infile.seek(0)
       for line in infile:
-            rw,size,sector,thisTime = parseLine(line)
+            words = line.split()
+            size = int(words[2])
+            sector = int(words[3])
+            thisTime = float(words[4])
             
             if maxSize < size:
                   maxSize = size
@@ -152,19 +155,20 @@ def findMinMax(infile):
             lastTime = thisTime
             
             if bigmem:
+                  rw = words[1][0] == 'W'
                   ops.append((rw,size,seek,delay))
       
       return (maxSize, maxSeek, minSeek, maxDelay)
 
-def countTransitions(infile, key):
+def countTransitions(infile):
       """Count the transitions between pairs of states in the input."""
       transitionCounts = {} # state -> (state -> int)
       
       if bigmem:
-            initialState = classify(ops[0], key)
+            initialState = classify(ops[0])
             lastState = initialState
             for op in ops[1:]:
-                  state = classify(op, key)
+                  state = classify(op)
                   if lastState in transitionCounts:
                         if state in transitionCounts[lastState]:
                               transitionCounts[lastState][state] += 1
@@ -182,17 +186,21 @@ def countTransitions(infile, key):
             lastSector = sector + (size/sectorSize)
             lastTime = thisTime
             op = (rw, size, 0, 0.0) #arbitrarily call it sequential
-            initialState = classify(op, key)
+            initialState = classify(op)
             lastState = initialState
       
             for line in infile:
-                  rw,size,sector,thisTime = parseLine(line)
+                  words = line.split()
+                  rw = words[1][0] == 'W'
+                  sector = int(words[3])
+                  thisTime = float(words[4])
+                  
                   seek = sector - lastSector
                   lastSector = sector + (size/sectorSize)
                   delay = thisTime - lastTime
                   lastTime = thisTime
 
-                  state = classify((rw, size, seek, delay), key)
+                  state = classify((rw, int(words[2]), seek, delay))
                   # increment lastState->state transition count
                   if lastState in transitionCounts:
                         if state in transitionCounts[lastState]:
@@ -228,7 +236,7 @@ if __name__ == "__main__":
       key = makeBuckets(maxSize, maxSeek, minSeek, maxDelay)
       
       print "Second pass"
-      (transitionCounts, initialState) = countTransitions(infile, key)
+      (transitionCounts, initialState) = countTransitions(infile)
       if bigmem:
             ops = None #free up the memory used by the op list
       else:

@@ -9,7 +9,8 @@ Copyright 2007 The University of New South Wales
 Author: Joshua Root <jmr@gelato.unsw.edu.au>
 """
 
-# todo: option to use posix async I/O (needs C module)
+# todo: option to use async I/O (needs C module)
+# option to not do I/O but only output ops in the format expected by btreplay
 
 # use psyco JIT if available (only on IA-32...)
 try:

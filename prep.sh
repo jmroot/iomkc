@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Turn blktrace output into build.py (Markov chain builder) input
+# Turn blktrace output into buildChain.py (Markov chain builder) input
 # usage: ./prep.sh dev outfile
 # e.g. ./prep.sh sdc trace.txt
 

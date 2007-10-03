@@ -28,7 +28,8 @@ from IOChain import IOChain, szkey, skkey, dlkey, strw, stsz, stsk, stdl
 # I guess we assume 512-byte sectors. Maybe it should be an option.
 sectorSize = 512
 
-sizeGranule = 4096
+# completely arbitrary "reasonable" default granularities
+sizeGranule = 1024
 seekGranule = 131072
 delayGranule = 0.001
 
@@ -214,12 +215,6 @@ def countTransitions(infile):
       return transitionCounts, initialState
 
 if __name__ == "__main__":
-
-      # defaults (can be overridden with command line options):
-      # buckets: r/w=2, seek=7 (farback,medback,nearback,0,nearfwd,
-      #                         medfwd,farfwd),
-      # size=10, delay=10
-      # state space size = 1400, (possible) graph edges = 1.96M
 
       parseArgs()
       

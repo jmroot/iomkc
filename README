@@ -32,13 +32,13 @@ does it right.
 
 Random implementation-related notes I wrote while developing this stuff:
 
-Use data from traces to determine appropriate buckets into which to
+Use min/max data from trace to determine appropriate buckets into which to
 divide transfer sizes, inter-op delays, and seek distance.
 
-Count up number of transitions between each triplet. Store probability
-matrix.
+Count up number of transitions between each triplet. Store weighted
+adjacency matrix (sparse, so use hashing).
 
 Replay by generating I/Os matching current triplet, moving to next based
-on matrix + random().
+on column in current matrix row matched by random().
 
-Store as lists of cumulative probabilities, e.g. [0.1, 0.3, 0.8, 1.0]
+Store rows as lists of cumulative probabilities, e.g. [0.1, 0.3, 0.8, 1.0]

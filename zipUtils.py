@@ -1,4 +1,4 @@
-﻿"""
+"""
 Helpers for loading and saving gzipped pickled objects.
 """
 

@@ -3,8 +3,9 @@ by Joshua Root <jmr@gelato.unsw.edu.au>
 
 To build a Markov chain: you'll need some blktrace output, which comes in
 the form of one file per CPU, normally named {device}.blktrace.{cpu}. First
-do: "./prep.sh {device} OPFILE". Then run "./buildChain.py -i OPFILE -o CHAINFILE"
-and a Markov chain built from the trace will be output to CHAINFILE.
+do: "./prep.sh {device} OPFILE". Then run "./buildChain.py -i OPFILE
+-o CHAINFILE" and a Markov chain built from the trace will be output to
+CHAINFILE.
 
 Options -s, -k and -d set the size of the buckets into which the transfer
 sizes (in bytes), seek lengths (in sectors) and inter-op delays (in seconds)
@@ -17,11 +18,11 @@ first build the C module with "python setup.py build". Then move it
 where python will find it with "mv build/lib.*/*.so ." (assuming you're in
 the directory containing runChain.py).
 
-Now run: "./runChain.py -i CHAINFILE -d TARGET". TARGET will be opened with O_DIRECT
-if available, so you really want it to be a device, e.g. /dev/sdb. The script
-will keep reading/writing to/from TARGET until you stop it, e.g. with ctrl-c.
-Or, you can specify a maximum number of ops to perform and/or a maximum time
-for which to run, using the -n and -t options respectively.
+Now run: "./runChain.py -i CHAINFILE -d TARGET". TARGET will be opened with
+O_DIRECT if available, so you really want it to be a device, e.g. /dev/sdb. The
+script will keep reading/writing to/from TARGET until you stop it, e.g. with
+ctrl-c. Or, you can specify a maximum number of ops to perform and/or a maximum
+time for which to run, using the -n and -t options respectively.
 
 Why the C extension exists:
 

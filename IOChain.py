@@ -22,7 +22,7 @@ stsz = 1
 stsk = 2
 stdl = 3
 
-class IOChain:
+class IOChain(object):
 	"""
 	Markov chain of I/O ops.
 	"""

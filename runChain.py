@@ -141,7 +141,10 @@ if __name__ == "__main__":
                   offset -= (devsize-size)
             
             if verbose:
-                  rw = 'w' if write else 'r'
+		  if write:
+		        rw = 'w' 
+		  else:
+		        rw = 'r'
                   print rw+","+str(size)+","+str(offset)+"("+str(seek)+")"+","+str(delay)
 
             if not pipe:

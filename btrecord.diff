@@ -1,0 +1,231 @@
+--- ../src/blktrace/btreplay/btrecord.c	2007-10-07 13:56:39.641975607 +1000
++++ ./btrecord.c	2007-10-09 12:39:07.105999051 +1000
+@@ -20,6 +20,8 @@
+ 
+ static char build_date[] = __DATE__ " at "__TIME__;
+ 
++#include "Python.h"
++
+ #include <assert.h>
+ #include <fcntl.h>
+ #include <stdio.h>
+@@ -39,64 +41,9 @@
+ 
+ #include "list.h"
+ #include "btrecord.h"
+-#include "blktrace.h"
+-
+-/*
+- * Per input file information
+- *
+- * @head: 	Used to link up on input_files
+- * @devnm: 	Device name portion of this input file
+- * @file_name: 	Fully qualified name for this input file
+- * @cpu: 	CPU that this file was collected on
+- * @ifd: 	Input file descriptor (when opened)
+- * @tpkts: 	Total number of packets processed.
+- */
+-struct ifile_info {
+-	struct list_head head;
+-	char *devnm, *file_name;
+-	int cpu, ifd;
+-	__u64 tpkts, genesis;
+-};
+-
+-/*
+- * Per IO trace information
+- *
+- * @time: 	Time stamp when trace was emitted
+- * @sector: 	IO sector identifier
+- * @bytes: 	Number of bytes transferred
+- * @rw: 	Read (1) or write (0) 
+- */
+-struct io_spec {
+-	__u64 time;
+-	__u64 sector;
+-	__u32 bytes;
+-	int rw;
+-};
+-
+-/*
+- * Per output file information
+- *
+- * @ofp: 	Output file 
+- * @vfp:	Verbose output file
+- * @file_name: 	Fully qualified name for this file
+- * @vfn:	Fully qualified name for this file
+- * @cur: 	Current IO bunch being collected
+- * @iip: 	Input file this is associated with
+- * @start_time: Start time of th ecurrent bunch
+- * @last_time: 	Time of last packet put in
+- * @bunches: 	Number of bunches processed
+- * @pkts: 	Number of packets stored in bunches
+- */
+-struct io_stream {
+-	FILE *ofp, *vfp;
+-	char *file_name, *vfn;
+-	struct io_bunch *cur;
+-	struct ifile_info *iip;
+-	__u64 start_time, last_time, bunches, pkts;
+-};
+ 
+ int data_is_native;				// Indicates whether to swap
+-static LIST_HEAD(input_files);			// List of all input files
++LIST_HEAD(input_files);			// List of all input files
+ static char *idir = ".";			// Input directory base
+ static char *odir = ".";			// Output directory base
+ static char *obase = "replay";			// Output file base
+@@ -198,6 +145,7 @@
+ 	/*NOTREACHED*/
+ }
+ 
++#if 0
+ /**
+  * match - Return true if this trace is a proper QUEUE transaction
+  * @action: Action field from trace
+@@ -207,6 +155,7 @@
+ 	return ((action & 0xffff) == __BLK_TA_QUEUE) &&
+ 				       (action & BLK_TC_ACT(BLK_TC_QUEUE));
+ }
++#endif
+ 
+ /**
+  * usage - Display usage string and version
+@@ -284,6 +233,7 @@
+ 	stream->last_time = spec->time;
+ }
+ 
++#if 0
+ /**
+  * rem_input_file - Release resources associated with an input file
+  * @iip: Per-input file information
+@@ -297,6 +247,7 @@
+ 	free(iip->devnm);
+ 	free(iip);
+ }
++#endif
+ 
+ /**
+  * __add_input_file - Allocate and initialize per-input file structure
+@@ -476,6 +427,7 @@
+ 	}
+ }
+ 
++#if 0
+ /**
+  * next_io - Retrieve next Q trace from input stream
+  * @iip: Per-input file information
+@@ -564,6 +516,7 @@
+ 
+ 	return 1;
+ }
++#endif
+ 
+ /**
+  * bunch_output_hdr - Output bunch header
+@@ -659,7 +612,7 @@
+  * @stream: Output stream information
+  * @spec: IO trace specification
+  */
+-static void stream_add_io(struct io_stream *stream, struct io_spec *spec)
++void stream_add_io(struct io_stream *stream, struct io_spec *spec)
+ {
+ 
+ 	if (stream->cur == NULL)
+@@ -676,7 +629,7 @@
+  * stream_open - Open output stream for specified input stream
+  * @iip: Per-input file information
+  */
+-static struct io_stream *stream_open(struct ifile_info *iip)
++struct io_stream *stream_open(struct ifile_info *iip)
+ {
+ 	char ofile_name[MAXPATHLEN];
+ 	struct io_stream *stream = malloc(sizeof(*stream));
+@@ -725,7 +678,7 @@
+  * stream_close - Release resources associated with an output stream
+  * @stream: Stream to release
+  */
+-static void stream_close(struct io_stream *stream)
++void stream_close(struct io_stream *stream)
+ {
+ 	struct io_file_hdr io_file_hdr = {
+ 		.genesis = stream->iip->genesis,
+@@ -755,6 +708,7 @@
+ 	free(stream);
+ }
+ 
++#if 0
+ /**
+  * process - Process one input file to an output file
+  * @iip: Per-input file information
+@@ -787,3 +741,4 @@
+ 
+ 	return 0;
+ }
++#endif
+
+--- ../src/blktrace/btreplay/btrecord.h	2007-10-03 05:10:21.261345559 +1000
++++ ./btrecord.h	2007-10-08 14:14:47.973537188 +1000
+@@ -92,4 +92,62 @@
+ static int btver_mnr = 9;
+ static int btver_sub = 3;
+ 
++/*
++ * Per input file information
++ *
++ * @head: 	Used to link up on input_files
++ * @devnm: 	Device name portion of this input file
++ * @file_name: 	Fully qualified name for this input file
++ * @cpu: 	CPU that this file was collected on
++ * @ifd: 	Input file descriptor (when opened)
++ * @tpkts: 	Total number of packets processed.
++ */
++struct ifile_info {
++	struct list_head head;
++	char *devnm, *file_name;
++	int cpu, ifd;
++	__u64 tpkts, genesis;
++};
++
++/*
++ * Per output file information
++ *
++ * @ofp: 	Output file 
++ * @vfp:	Verbose output file
++ * @file_name: 	Fully qualified name for this file
++ * @vfn:	Fully qualified name for this file
++ * @cur: 	Current IO bunch being collected
++ * @iip: 	Input file this is associated with
++ * @start_time: Start time of th ecurrent bunch
++ * @last_time: 	Time of last packet put in
++ * @bunches: 	Number of bunches processed
++ * @pkts: 	Number of packets stored in bunches
++ */
++struct io_stream {
++	FILE *ofp, *vfp;
++	char *file_name, *vfn;
++	struct io_bunch *cur;
++	struct ifile_info *iip;
++	__u64 start_time, last_time, bunches, pkts;
++};
++
++/*
++ * Per IO trace information
++ *
++ * @time: 	Time stamp when trace was emitted
++ * @sector: 	IO sector identifier
++ * @bytes: 	Number of bytes transferred
++ * @rw: 	Read (1) or write (0) 
++ */
++struct io_spec {
++	__u64 time;
++	__u64 sector;
++	__u32 bytes;
++	int rw;
++};
++
++struct io_stream *stream_open(struct ifile_info *iip);
++void stream_add_io(struct io_stream *stream, struct io_spec *spec);
++void stream_close(struct io_stream *stream);
++
+ #endif

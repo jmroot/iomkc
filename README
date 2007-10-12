@@ -24,6 +24,10 @@ script will keep reading/writing to/from TARGET until you stop it, e.g. with
 ctrl-c. Or, you can specify a maximum number of ops to perform and/or a maximum
 time for which to run, using the -n and -t options respectively.
 
+Adding "-p OUT" to the command line will cause runChain to not perform the I/O
+operations itself, but instead write a description of them to OUT in btrecord
+format. The idea is that you can then use OUT as input for btreplay.
+
 Why the C extension exists:
 
 Reads initially always threw exceptions. Apparently this was because Python

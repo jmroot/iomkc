@@ -3,7 +3,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the Australian Public Licence B. See the file
-# COPYING for the licence terms.
+# OZPLB.txt for the licence terms.
 
 """
 Markov chain of I/O operations.

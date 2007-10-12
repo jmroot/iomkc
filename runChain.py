@@ -5,7 +5,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the Australian Public Licence B. See the file
-# COPYING for the licence terms.
+# OZPLB.txt for the licence terms.
 
 """
 Run I/O ops from a Markov chain built from blkparse output
@@ -17,6 +17,7 @@ Usage: runChain.py -i chainfile -d device [options]
 # option to use async I/O (needs C module)
 # a way to limit the number of in-flight I/Os
 # option to "go fast", i.e. ignore delays and do each I/O immediately
+# ability to specify a random seed, for reproducibility
 
 # use psyco JIT if available (only on IA-32...)
 try:
@@ -27,8 +28,6 @@ except ImportError:
 
 from datetime import datetime
 from getopt import gnu_getopt
-import btrecord
-import directrw
 import os
 import sys
 import threading
@@ -86,6 +85,12 @@ def do_io(write, size):
 if __name__ == "__main__":
 
       parseArgs()
+      
+      if pipe:
+            import btrecord
+      else:
+            import directrw
+      
       chain = zipLoad(infilename)
       
       offset = 0

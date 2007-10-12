@@ -5,10 +5,10 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the Australian Public Licence B. See the file
-# COPYING for the licence terms.
+# OZPLB.txt for the licence terms.
 
 import sys
-from zipUtils import zipLoad, zipSave
+from zipUtils import zipLoad
 from IOChain import IOChain
 
 if __name__ == "__main__":

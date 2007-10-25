@@ -47,10 +47,12 @@ devicepath = None
 maxOps = None
 maxTime = None
 verbose = False
+randseed = None
 
 def parseArgs():
-      global infilename, devicepath, devicename, maxOps, maxTime, pipe, verbose
-      optlist, args = gnu_getopt(sys.argv[1:], "d:i:n:t:p:v")
+      global infilename, devicepath, devicename, maxOps, maxTime,\
+             pipe, verbose, randseed
+      optlist, args = gnu_getopt(sys.argv[1:], "d:i:n:r:t:p:v")
       for opt,val in optlist:
             if opt == "-d":
                   # this should be the full path e.g. /dev/sdb
@@ -63,6 +65,8 @@ def parseArgs():
                   maxTime = float(val) #in seconds
             elif opt == "-p":
                   pipe = val
+            elif opt == "-r":
+                  randseed = int(val)
             elif opt == "-v":
                   verbose = True
             else:
@@ -92,6 +96,8 @@ if __name__ == "__main__":
             import directrw
       
       chain = zipLoad(infilename)
+
+      chain.randSeed(randseed)
       
       offset = 0
       flags = os.O_RDWR

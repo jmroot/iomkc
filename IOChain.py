@@ -11,7 +11,7 @@ Markov chain of I/O operations.
 State tuple is (r/w,size,seek,delay)
 """
 
-from random import random
+import random
 
 szkey = 0 #indices into stateKey for the attributes
 skkey = 1
@@ -31,8 +31,11 @@ class IOChain(object):
 		self.state = initialState
 		self.matrix = self._buildMatrix(transitionCounts)
 
+	def randSeed(self, seed):
+		random.seed(seed)
+
 	def step(self):
-            X = random()
+            X = random.random()
             probs = self.matrix[self.state]
             #print probs
             for (p,s) in probs:
@@ -44,15 +47,15 @@ class IOChain(object):
             print "oops, random variable matched no probabilities"
 
 	def genOp(self, st):
-		rnd = random()
+		rnd = random.random()
 		sz = int(rnd*(self.stateKey[szkey][st[stsz]+1] - \
 			self.stateKey[szkey][st[stsz]]) + \
 			self.stateKey[szkey][st[stsz]])
-		rnd = random()
+		rnd = random.random()
 		sk = int(rnd*(self.stateKey[skkey][st[stsk]+1] - \
 			self.stateKey[skkey][st[stsk]]) + \
 			self.stateKey[skkey][st[stsk]])
-		rnd = random()
+		rnd = random.random()
 		dl = rnd*(self.stateKey[dlkey][st[stdl]+1] - \
 			self.stateKey[dlkey][st[stdl]]) + \
 			self.stateKey[dlkey][st[stdl]]

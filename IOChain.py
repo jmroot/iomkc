@@ -29,6 +29,7 @@ class IOChain(object):
 	def __init__(self, initialState, stateKey, transitionCounts):
 		self.stateKey = stateKey # bucket boundaries
 		self.state = initialState
+		self.initialState = initialState
 		self.matrix = self._buildMatrix(transitionCounts)
 
 	def randSeed(self, seed):
@@ -36,14 +37,17 @@ class IOChain(object):
 
 	def step(self):
             X = random.random()
-            probs = self.matrix[self.state]
+	    try:
+		    probs = self.matrix[self.state]
+	    except KeyError:
+		    # this happens when the last I/O in the trace was
+		    # of a class not seen previously
+		    probs = [(1.0,self.initialState)]
             #print probs
             for (p,s) in probs:
                   if X < p:
                         self.state = s
                         return
-            # XXX the last state in the source trace could quite
-            # possibly not be a key in matrix
             print "oops, random variable matched no probabilities"
 
 	def genOp(self, st):

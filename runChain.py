@@ -17,7 +17,6 @@ Usage: runChain.py -i chainfile -d device [options]
 # option to use async I/O (needs C module)
 # a way to limit the number of in-flight I/Os
 # option to "go fast", i.e. ignore delays and do each I/O immediately
-# ability to specify a random seed, for reproducibility
 
 # use psyco JIT if available (only on IA-32...)
 try:
@@ -78,7 +77,7 @@ def parseArgs():
             sys.exit(2)
 
       if pipe:
-            devicename = devicepath.split('/')[-1]
+            devicename = devicepath[len("/dev/"):]
 
 def do_io(write, size):
       if write:
@@ -146,10 +145,8 @@ if __name__ == "__main__":
             size &= sectorMask #whole sectors only
             seek *= sectorSize
             offset += seek
-            if offset < 0:
-                  offset += devsize
-            if (offset+size) >= devsize:
-                  offset -= (devsize-size)
+            if offset < 0 or (offset+size) >= devsize:
+                  offset %= (devsize-size)
             
             if verbose:
 		  if write:

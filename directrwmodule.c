@@ -84,7 +84,7 @@ directrw_write(PyObject *self /* Not used */, PyObject *args)
         Py_END_ALLOW_THREADS
 
         if (n == -1) {
-                if (abuf)
+                if (abuf && abuf != buf)
                         free(abuf);
                 return PyErr_SetFromErrno(PyExc_OSError);
         }

@@ -65,11 +65,13 @@ btrecordmodule_addOp(PyObject *self /* Not used */, PyObject *args)
 {
 	struct io_spec spec;
 
-	if (!PyArg_ParseTuple(args, "illl", &spec.rw, &spec.bytes,
+	if (!PyArg_ParseTuple(args, "iIKK", &spec.rw, &spec.bytes,
 			      &spec.sector, &spec.time))
 		return NULL;
 	
 	spec.rw = !spec.rw;
+	/* printf("spec=%d,%u,%llu,%llu\n", spec.rw, spec.bytes, spec.sector,
+        	  spec.time); */
 	stream_add_io(stream, &spec);
 	
 	Py_INCREF(Py_None);

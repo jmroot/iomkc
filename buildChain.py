@@ -69,12 +69,17 @@ def parseArgs():
 
 def parseLine(line):
       words = line.split()
+      if words[0] == 'C':
+            return None
       rw = words[1][0] == 'W'
       size = int(words[2])
       sector = int(words[3])
       secs = float(words[4])
+      name = ""
+      if len(words) > 5: 
+            name = words[5]
       
-      return (rw,size,sector,secs)
+      return (rw,size,sector,secs,name)
 
 def classify(op):
       """Determine which bucket number each quantity belongs in."""
@@ -140,9 +145,14 @@ def findMinMax(infile):
       infile.seek(0)
       for line in infile:
             words = line.split()
+            if words[0] == 'C':
+                  continue
             size = int(words[2])
             sector = int(words[3])
             thisTime = float(words[4])
+            name = ""
+            if len(words) > 5: 
+                  name = words[5]
             
             if maxSize < size:
                   maxSize = size
@@ -187,7 +197,10 @@ def countTransitions(infile):
             infile.seek(0)
             # special-case first op since it doesn't come from any other one -- sigh
             line = infile.next()
-            rw,size,sector,thisTime = parseLine(line)
+            parsedLine = None
+            while parsedLine is None:
+                  parsedLine = parseLine(line)
+            rw,size,sector,thisTime,name = parsedLine
             lastSector = sector + (size/sectorSize)
             lastTime = thisTime
             op = (rw, size, 0, 0.0) #arbitrarily call it sequential
@@ -196,9 +209,16 @@ def countTransitions(infile):
       
             for line in infile:
                   words = line.split()
+                  # preparing for proper thinktime calculation,
+                  # i.e. C-Q rather than Q-Q
+                  if words[0] == 'C':
+                        continue
                   rw = words[1][0] == 'W'
                   sector = int(words[3])
                   thisTime = float(words[4])
+                  name = ""
+                  if len(words) > 5: 
+                        name = words[5]
                   
                   seek = sector - lastSector
                   lastSector = sector + (size/sectorSize)

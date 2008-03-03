@@ -58,7 +58,9 @@ class TSVals(object):
             self.lastSector = 0
             self.depth = 0
             self.maxDepth = 0
-      
+            self.cweight = 1 # how many requests will actually be completed
+                             # by the next C event
+            
             self.reads = 0
             self.writes = 0
             self.lastWasRead = True
@@ -201,8 +203,19 @@ def handleCompletion(vals, name, thisTime):
       
 	for v in [val, overall]:
 		v.lastCompletion = thisTime
-		if v.depth > 0:
-			v.depth -= 1
+		v.depth -= v.cweight
+                v.cweight = 1
+                if v.depth < 0:
+                      v.depth = 0
+
+def handleMerge(vals, name):
+      if name not in vals:
+            vals[name] = TSVals()
+      val = vals[name]
+      overall = vals["__overall"]
+
+      for v in [val, overall]:
+            v.cweight += 1
 
 def updateRun1(vals, rw, sync, size, sector, thisTime, name):
       if name not in vals:
@@ -376,6 +389,8 @@ def writeJobFile(vals):
             else:
                   print "ioengine=libaio"
 
+            if v.maxDepth > 64:
+                  v.maxDepth = 64
             print "iodepth="+str(int(round(v.maxDepth)))
             
             bsrange = ""
@@ -387,6 +402,8 @@ def writeJobFile(vals):
                   bsrange += str(v.minWrite)+"-"+str(v.maxWrite)
             print "bsrange="+bsrange
 
+            if v.meanThink > 60:
+                  v.meanThink = 60
             micros = int(round(v.meanThink * 1000000))
             print "thinktime="+str(micros)
 
@@ -398,11 +415,10 @@ def writeJobFile(vals):
             else:
                   print "rw=randrw:"+str(meanSequential)
 
-            pctread = (float(v.reads) / v.totalOps) * 100
-            print "rwmixread="+str(int(round(pctread)))
-
-            print "rwmixcycle="+str(int(round(v.dirSwapTime)))
-
+            if v.reads != 0 and v.writes != 0:
+                  pctread = (float(v.reads) / v.totalOps) * 100
+                  print "rwmixread="+str(int(round(pctread)))
+                  print "rwmixcycle="+str(int(round(v.dirSwapTime)))
             print ""
 
 if __name__ == "__main__":
@@ -419,6 +435,9 @@ if __name__ == "__main__":
             name = words[5]
             if words[0] == 'C':
                   handleCompletion(vals, name, thisTime)
+                  continue
+            if words[0] == 'M' or words[0] == 'F':
+                  handleMerge(vals, name)
                   continue
 
             rw = words[1][0] == 'W'
@@ -462,6 +481,9 @@ if __name__ == "__main__":
                   infile.seek(0)
                   for line in infile:
                         words = line.split()
+                        if words[0] == 'C' or words[0] == 'M' \
+                               or words[0] == 'F':
+                              continue
                         size = int(words[2])
                         sector = int(words[3])
                         thisTime = float(words[4])

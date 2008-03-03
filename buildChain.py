@@ -69,7 +69,7 @@ def parseArgs():
 
 def parseLine(line):
       words = line.split()
-      if words[0] == 'C':
+      if words[0] == 'C' or words[0] == 'M' or words[0] == 'F':
             return None
       rw = words[1][0] == 'W'
       size = int(words[2])
@@ -145,7 +145,7 @@ def findMinMax(infile):
       infile.seek(0)
       for line in infile:
             words = line.split()
-            if words[0] == 'C':
+            if words[0] == 'C' or words[0] == 'M' or words[0] == 'F':
                   continue
             size = int(words[2])
             sector = int(words[3])
@@ -211,7 +211,7 @@ def countTransitions(infile):
                   words = line.split()
                   # preparing for proper thinktime calculation,
                   # i.e. C-Q rather than Q-Q
-                  if words[0] == 'C':
+                  if words[0] == 'C' or words[0] == 'M' or words[0] == 'F':
                         continue
                   rw = words[1][0] == 'W'
                   sector = int(words[3])

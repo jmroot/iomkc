@@ -368,7 +368,10 @@ def writeJobFile(vals):
       print "filename=FILENAME"
       print "direct=1"
       print "runtime=60" # 1 minute
+      print "size=1M"
       print "time_based"
+      print "do_verify=0"
+      print "zero_buffers"
       print "norandommap"
       print ""
       

@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-# Copyright 2007 The University of New South Wales
+# Copyright 2007,2008 The University of New South Wales
 # Author: Joshua Root <jmr@gelato.unsw.edu.au>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -8,7 +8,8 @@
 # OZPLB.txt for the licence terms.
 
 """
-Calculate statistics for a trace
+Calculate statistics for a trace, and optionally, use them to create an
+fio job file that approximates the workload seen in the trace.
 """
 
 # use psyco JIT if available (only on IA-32...)
@@ -44,7 +45,7 @@ def parseArgs():
                   sys.exit(2)
 
       if infilename is None:
-            print "Usage: traceStats.py -i infile [-m]"
+            print "Usage: traceStats.py -i infile [-m] [-f]"
             sys.exit(2)
 
 class TSVals(object):

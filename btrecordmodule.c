@@ -3,7 +3,7 @@
  *
  * Author: Joshua Root <jmr@gelato.unsw.edu.au>
  *
- * Copyright (C) 2007 The University of New South Wales
+ * Copyright (C) 2007,2008 The University of New South Wales
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

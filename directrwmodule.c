@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 The University of New South Wales
+ * Copyright 2007,2008 The University of New South Wales
  * Author: Joshua Root <jmr@gelato.unsw.edu.au>
  *
  * This program is free software; you can redistribute it and/or modify
